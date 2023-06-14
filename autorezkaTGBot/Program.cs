@@ -152,7 +152,6 @@ namespace autorezkaTGBot
                     //удаление папки с екселями
                     Directory.Delete($@"..\..\..\{nameFolder}", true);
 
-
                     //отправка архива на сторону клиента
                     Console.WriteLine("отправка");
                     using (Stream stream = System.IO.File.OpenRead($@"..\..\..\{nameFolder}.rar"))
