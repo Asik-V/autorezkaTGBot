@@ -71,11 +71,11 @@ namespace autorezkaTGBot
                 System.IO.File.WriteAllText(@"..\..\..\text.txt", message.Text);
 
                 //заполнение массива из текстового документа
-                string[] arrStr = System.IO.File.ReadAllText(@$"C:\Users\{Environment.UserName}\Desktop\autorezkaTGBot\autorezkaTGBot\text.txt").Split('\n');
+                string[] arrStr = System.IO.File.ReadAllText(@$"..\..\..\text.txt").Split('\n');
                 
                 string nameFolder = arrStr[arrStr.Length - 1];
                 nameFolder = nameFolder.Replace(' ', '_');
-                Console.WriteLine($"Название папки, екселей: {nameFolder}");
+                Console.WriteLine($"Name folder: {nameFolder}");
 
                 
                 string[] indexOne = arrStr[0].Split(' ');
@@ -93,7 +93,6 @@ namespace autorezkaTGBot
 
 
                     //алгоритм растяжки
-                    Console.WriteLine("растяжка");
                     for (int i = 0; i <= arrStr.Length - 1; i++)
                     {
                         string[] numbers = arrStr[i].Split(Char.Parse(" "));
@@ -104,8 +103,9 @@ namespace autorezkaTGBot
                         System.Console.WriteLine($"{numbers[0]} - {numbers[2]}");
                     }
                     copyArr.AddRange(completeArr);
+                    Console.WriteLine($"Numbers: {copyArr.Count()}");
                     //перемешивание
-                    Console.WriteLine("перемешивание");
+                    Console.Write("mixing");
                     for (int i = completeArr.Count - 1; i >= 1; i--)
                     {
                         int j = random.Next(i + 1);
@@ -118,7 +118,7 @@ namespace autorezkaTGBot
 
 
                     //заполнение екселей данными массива
-                    Console.WriteLine("заполнение");
+                    Console.Write("---filling");
                     for (int i = 0; i <= countExcels - 1; i++)
                     {
                         using (ExcelPackage excelPackage = new ExcelPackage())
@@ -134,14 +134,14 @@ namespace autorezkaTGBot
 
                             completeArr.RemoveRange(0, 50000);
 
-                            excelPackage.SaveAs(@$"C:\\Users\\{Environment.UserName}\\Desktop\\autorezkaTGBot\\autorezkaTGBot\\{nameFolder}\\{nameFolder}-{i + 1}.xlsx");
+                            excelPackage.SaveAs(@$"..\..\..\{nameFolder}\\{nameFolder}-{i + 1}.xlsx");
 
                         }
                     }
 
 
                     //архивация папки с екселями
-                    Console.WriteLine("архивация");
+                    Console.Write("---archiving");
                     string arg = $@"a ..\..\..\{nameFolder}.rar ..\..\..\{nameFolder}";
                     ProcessStartInfo ps = new ProcessStartInfo();
                     ps.FileName = @"C:\Program Files\WinRAR\WinRAR.exe";
@@ -153,7 +153,7 @@ namespace autorezkaTGBot
                     Directory.Delete($@"..\..\..\{nameFolder}", true);
 
                     //отправка архива на сторону клиента
-                    Console.WriteLine("отправка");
+                    Console.WriteLine("---sending");
                     using (Stream stream = System.IO.File.OpenRead($@"..\..\..\{nameFolder}.rar"))
                     {
                         await botClient.SendDocumentAsync(message.Chat.Id, new InputFileStream(content: stream, fileName: $@"..\..\..\{nameFolder}.rar"));
@@ -161,7 +161,7 @@ namespace autorezkaTGBot
                     Thread.Sleep(5000);
                     System.IO.File.Delete(@$"..\..\..\{nameFolder}.rar");
 
-                    Console.WriteLine("Готово");
+                    Console.WriteLine("---DONE---");
                     
                     Logging(message, nameFolder, copyArr, "complete");
                     
@@ -169,7 +169,7 @@ namespace autorezkaTGBot
                 }
                 else if (message.Text.ToLower() == "/start")
                 {
-                    await botClient.SendTextMessageAsync(message.Chat, "Кидай заготовки, Пых");
+                    await botClient.SendTextMessageAsync(message.Chat, "Кидай заготовки, Пыхчанский");
                     Logging(message, "/start");
                     return;
                 }
