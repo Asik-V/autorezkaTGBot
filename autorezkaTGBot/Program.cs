@@ -77,107 +77,115 @@ namespace autorezkaTGBot
                 nameFolder = nameFolder.Replace(' ', '_');
                 Console.WriteLine($"Name folder: {nameFolder}");
 
-                
                 string[] indexOne = arrStr[0].Split(' ');
-                if (indexOne[0].Length == 11)
+                try
                 {
-
-                    Directory.CreateDirectory(@$"..\..\..\{nameFolder}");
-                    Array.Resize<string>(ref arrStr, arrStr.Length - 1);
-
-                    List<long> completeArr = new List<long>();
-                    List<long> copyArr = new List<long>();
-                    Random random = new Random();
-                    ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-
-
-
-                    //алгоритм растяжки
-                    for (int i = 0; i <= arrStr.Length - 1; i++)
+                    if (indexOne[0].Length == 11)
                     {
-                        string[] numbers = arrStr[i].Split(Char.Parse(" "));
-                        for (long j = long.Parse(numbers[0]); j <= long.Parse(numbers[2]); j++)
+
+                        Directory.CreateDirectory(@$"..\..\..\{nameFolder}");
+                        Array.Resize<string>(ref arrStr, arrStr.Length - 1);
+
+                        List<long> completeArr = new List<long>();
+                        List<long> copyArr = new List<long>();
+                        Random random = new Random();
+                        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+                        
+                        await botClient.SendTextMessageAsync(message.Chat, "обработка...");
+
+                        //алгоритм растяжки
+                        for (int i = 0; i <= arrStr.Length - 1; i++)
                         {
-                            completeArr.Add(j);
-                        }
-                        System.Console.WriteLine($"{numbers[0]} - {numbers[2]}");
-                    }
-                    copyArr.AddRange(completeArr);
-                    Console.WriteLine($"Numbers: {copyArr.Count()}");
-                    //перемешивание
-                    Console.Write("mixing");
-                    for (int i = completeArr.Count - 1; i >= 1; i--)
-                    {
-                        int j = random.Next(i + 1);
-                        var temp = completeArr[j];
-                        completeArr[j] = completeArr[i];
-                        completeArr[i] = temp;
-                    }
-
-                    int countExcels = completeArr.Count / 50000;
-
-
-                    //заполнение екселей данными массива
-                    Console.Write("---filling");
-                    for (int i = 0; i <= countExcels - 1; i++)
-                    {
-                        using (ExcelPackage excelPackage = new ExcelPackage())
-                        {
-                            excelPackage.Workbook.Worksheets.Add("List1");
-                            excelPackage.Workbook.Worksheets[0].Cells["A1"].Value = 1;
-                            ExcelWorksheet worksheet = excelPackage.Workbook.Worksheets[0];
-
-                            for (int j = 0; j < 50000; j++)
+                            string[] numbers = arrStr[i].Split(Char.Parse(" "));
+                            for (long j = long.Parse(numbers[0]); j <= long.Parse(numbers[2]); j++)
                             {
-                                worksheet.Cells[$"A{j + 1}"].Value = completeArr[j];
+                                completeArr.Add(j);
                             }
-
-                            completeArr.RemoveRange(0, 50000);
-
-                            excelPackage.SaveAs(@$"..\..\..\{nameFolder}\\{nameFolder}-{i + 1}.xlsx");
-
+                            System.Console.WriteLine($"{numbers[0]} - {numbers[2]}");
                         }
+                        copyArr.AddRange(completeArr);
+                        Console.WriteLine($"Numbers: {copyArr.Count()}");
+                        //перемешивание
+                        Console.Write("mixing");
+                        for (int i = completeArr.Count - 1; i >= 1; i--)
+                        {
+                            int j = random.Next(i + 1);
+                            var temp = completeArr[j];
+                            completeArr[j] = completeArr[i];
+                            completeArr[i] = temp;
+                        }
+
+                        int countExcels = completeArr.Count / 50000;
+
+
+                        //заполнение екселей данными массива
+                        Console.Write("---filling");
+                        for (int i = 0; i <= countExcels - 1; i++)
+                        {
+                            using (ExcelPackage excelPackage = new ExcelPackage())
+                            {
+                                excelPackage.Workbook.Worksheets.Add("List1");
+                                excelPackage.Workbook.Worksheets[0].Cells["A1"].Value = 1;
+                                ExcelWorksheet worksheet = excelPackage.Workbook.Worksheets[0];
+
+                                for (int j = 0; j < 50000; j++)
+                                {
+                                    worksheet.Cells[$"A{j + 1}"].Value = completeArr[j];
+                                }
+
+                                completeArr.RemoveRange(0, 50000);
+
+                                excelPackage.SaveAs(@$"..\..\..\{nameFolder}\\{nameFolder}-{i + 1}.xlsx");
+
+                            }
+                        }
+
+
+                        //архивация папки с екселями
+                        Console.Write("---archiving");
+                        string arg = $@"a ..\..\..\{nameFolder}.rar ..\..\..\{nameFolder}";
+                        ProcessStartInfo ps = new ProcessStartInfo();
+                        ps.FileName = @"C:\Program Files\WinRAR\WinRAR.exe";
+                        ps.Arguments = arg;
+                        Process.Start(ps);
+                        Thread.Sleep(3000);
+
+                        //удаление папки с екселями
+                        Directory.Delete($@"..\..\..\{nameFolder}", true);
+
+                        //отправка архива на сторону клиента
+                        Console.WriteLine("---sending");
+                        using (Stream stream = System.IO.File.OpenRead($@"..\..\..\{nameFolder}.rar"))
+                        {
+                            await botClient.SendDocumentAsync(message.Chat.Id, new InputFileStream(content: stream, fileName: $@"..\..\..\{nameFolder}.rar"));
+                        }
+                        Thread.Sleep(5000);
+                        System.IO.File.Delete(@$"..\..\..\{nameFolder}.rar");
+
+                        Console.WriteLine("---DONE---");
+
+                        Logging(message, nameFolder, copyArr, "complete");
+
+                        return;
                     }
-
-
-                    //архивация папки с екселями
-                    Console.Write("---archiving");
-                    string arg = $@"a ..\..\..\{nameFolder}.rar ..\..\..\{nameFolder}";
-                    ProcessStartInfo ps = new ProcessStartInfo();
-                    ps.FileName = @"C:\Program Files\WinRAR\WinRAR.exe";
-                    ps.Arguments = arg;
-                    Process.Start(ps);
-                    Thread.Sleep(3000);
-
-                    //удаление папки с екселями
-                    Directory.Delete($@"..\..\..\{nameFolder}", true);
-
-                    //отправка архива на сторону клиента
-                    Console.WriteLine("---sending");
-                    using (Stream stream = System.IO.File.OpenRead($@"..\..\..\{nameFolder}.rar"))
+                
+                    else if (message.Text.ToLower() == "/start")
                     {
-                        await botClient.SendDocumentAsync(message.Chat.Id, new InputFileStream(content: stream, fileName: $@"..\..\..\{nameFolder}.rar"));
+                        await botClient.SendTextMessageAsync(message.Chat, "Кидай заготовки, Пыхчанский");
+                        Logging(message, "/start");
+                        return;
                     }
-                    Thread.Sleep(5000);
-                    System.IO.File.Delete(@$"..\..\..\{nameFolder}.rar");
-
-                    Console.WriteLine("---DONE---");
-                    
-                    Logging(message, nameFolder, copyArr, "complete");
-                    
-                    return;
+                    else
+                    {
+                        await botClient.SendTextMessageAsync(message.Chat, "Неверно указан формат");
+                        Logging(message, "error");
+                        return;
+                    }
                 }
-                else if (message.Text.ToLower() == "/start")
+                catch (Exception ex)
                 {
-                    await botClient.SendTextMessageAsync(message.Chat, "Кидай заготовки, Пыхчанский");
-                    Logging(message, "/start");
-                    return;
-                }
-                else
-                {
-                    await botClient.SendTextMessageAsync(message.Chat, "Неверно указан формат");
-                    Logging(message, "error");
-                    return;
+                    Console.WriteLine(ex.Message);
+                    await botClient.SendTextMessageAsync(message.Chat, ex.Message);
                 }
             }
         }
